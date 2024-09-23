@@ -1,0 +1,37 @@
+@media (prefers-color-scheme: light) {
+  a:hover {
+    color: #61dafb;
+  }
+}
+
+body {
+  min-width: 20rem;
+}
+
+#app {
+  background-color: #ffffff;
+  opacity: 99%;
+}
+
+main {
+  /* width: 60%; */
+  height: 100vh;
+  text-align: center;
+  padding: 4em;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+}
+
+.bso-container {
+  background: linear-gradient(#d3d5ff 1.8px, transparent 1.8px),
+    linear-gradient(to right, #d3d5ff 1.8px, #ffffff 1.8px),
+    linear-gradient(to right, rgb(199, 210, 254), rgb(254, 202, 202), rgb(254, 249, 195));
+  opacity: 0.4;
+  background-size: 36px 36px;
+  position: fixed;
+  inset: 0;
+  -webkit-mask-image: linear-gradient(225deg, white, transparent 60%, transparent 75%);
+  mask-image: linear-gradient(225deg, white, transparent 60%, transparent 75%);
+  z-index: -5;
+}
