@@ -30,3 +30,8 @@ body {
   min-width: 20rem;
   margin: 0;
 }
+
+::selection {
+  background-color: #ffbe18;
+  color: white;
+}

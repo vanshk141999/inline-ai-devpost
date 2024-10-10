@@ -1,10 +1,8 @@
 import { defineManifest } from '@crxjs/vite-plugin'
 import packageData from '../package.json' assert { type: 'json' }
 
-const isDev = process.env.NODE_ENV == ''
-
 export default defineManifest({
-  name: 'Inline AI',
+  name: 'Use Chat GPT On Any Website - Inline AI',
   description: packageData.description,
   version: packageData.version,
   manifest_version: 3,
@@ -15,21 +13,13 @@ export default defineManifest({
     128: 'img/logo-128.png',
   },
   action: {
-    // default_popup: 'popup.html',
     default_icon: 'img/logo-48.png',
   },
   options_page: 'options.html',
-  // devtools_page: 'devtools.html',
   background: {
     service_worker: 'src/background/index.js',
     type: 'module',
   },
-  content_scripts: [
-    {
-      matches: ['http://*/*', 'https://*/*'],
-      js: ['src/contentScript/index.js'],
-    },
-  ],
   side_panel: {
     default_path: 'sidepanel.html',
   },
@@ -39,10 +29,6 @@ export default defineManifest({
       matches: [],
     },
   ],
-  permissions: ['activeTab', 'contextMenus', 'storage', 'tabs', 'sidePanel'],
-  // chrome_url_overrides: {
-  //   newtab: 'newtab.html',
-  // },
   commands: {
     _execute_action: {
       suggested_key: {
@@ -50,7 +36,7 @@ export default defineManifest({
         mac: 'Command+Shift+P',
         windows: 'Ctrl+Shift+P',
       },
-      description: 'Start the extension',
+      description: 'Open Side Panel',
     },
     options_page: {
       suggested_key: {
@@ -61,4 +47,5 @@ export default defineManifest({
       description: 'Opens the options page',
     },
   },
+  permissions: ['activeTab', 'contextMenus', 'storage', 'tabs', 'sidePanel'],
 })

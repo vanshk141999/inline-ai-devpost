@@ -3,9 +3,9 @@
   "displayName": "inline-ai",
   "version": "1.1",
   "author": "Vansh Kapoor",
-  "description": "",
+  "description": "Use GPT for running a quick prompt, fixing grammar, translating text, all with a simple click.",
   "type": "module",
-  "license": "MIT",
+  "license": "",
   "keywords": [
     "chrome-extension",
     "react",
@@ -23,12 +23,12 @@
     "zip": "npm run build && node src/zip.js"
   },
   "dependencies": {
-    "@lemonsqueezy/lemonsqueezy.js": "^3.2.0",
     "react": "^18.2.0",
     "react-beautiful-dnd": "^13.1.1",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.4.1",
-    "react-icons": "^5.3.0"
+    "react-icons": "^5.3.0",
+    "react-markdown": "^9.0.1"
   },
   "devDependencies": {
     "@crxjs/vite-plugin": "^2.0.0-beta.19",

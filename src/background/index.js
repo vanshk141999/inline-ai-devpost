@@ -1,13 +1,15 @@
+// get settings from storage
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.type === 'getSettings') {
     chrome.storage.sync.get(
-      ['iai_license_key', 'iai_model', 'iai_llm', 'iai_api_key'],
+      ['iai_license_key', 'iai_model', 'iai_llm', 'iai_prompt_list', 'iai_api_key'],
       (result) => {
         const isLicensed = result.iai_license_key ? true : false
         const model = result.iai_model || 'gemini'
         const llm = result.iai_llm || 'gemini-nano'
+        const promptList = result.iai_prompt_list || []
         const apiKey = result.iai_api_key || ''
-        sendResponse({ isLicensed, model, llm, apiKey }) // Send the license key back to the content script
+        sendResponse({ isLicensed, model, llm, promptList, apiKey }) // Send the license key back to the content script
       },
     )
     return true // Required to indicate that sendResponse will be called asynchronously
@@ -33,227 +35,95 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   // }
 })
 
-// manage shortcuts
-chrome.commands.onCommand.addListener((command) => {
-  if (command === 'options_page') {
-    chrome.runtime.openOptionsPage()
-  }
-})
-
-chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
-  if (message.action === 'getOpenAIResponse') {
-    chrome.storage.sync.get(['iai_api_key', 'iai_llm'], async (result) => {
-      const apiKey = result.iai_api_key || ''
-      const modelLlm = result.iai_llm || 'gpt-4'
-
-      if (!apiKey) {
-        sendResponse({ error: 'API key not found' })
-        return
-      }
-
-      try {
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({
-            model: modelLlm,
-            messages: message.messages,
-            stream: true, // Enable streaming
-          }),
-        })
-
-        if (!response.ok) {
-          throw new Error('OpenAI API request failed')
-        }
-
-        const reader = response.body.getReader()
-        const decoder = new TextDecoder('utf-8')
-        let done = false
-        let fullResponse = ''
-        let buffer = ''
-
-        while (!done) {
-          const { value, done: streamDone } = await reader.read()
-          done = streamDone
-          const chunk = decoder.decode(value, { stream: true })
-          buffer += chunk
-
-          // Process buffer to extract complete JSON objects
-          let endIndex
-          while ((endIndex = buffer.indexOf('\n')) >= 0) {
-            const line = buffer.slice(0, endIndex).trim()
-            buffer = buffer.slice(endIndex + 1)
-
-            if (line) {
-              try {
-                const json = JSON.parse(line.replace(/^data: /, ''))
-                const content = json.choices[0].delta.content
-                fullResponse += content
-
-                // Send each chunk to the content script with selected text
-                chrome.tabs.sendMessage(sender.tab.id, {
-                  action: 'streamChunk',
-                  chunk: content,
-                  selectedText: message.selectedText, // Pass selected text back
-                })
-              } catch (e) {
-                console.error('Error parsing JSON:', e)
-              }
-            }
-          }
-        }
-
-        // chrome.tabs.sendMessage(sender.tab.id, { action: 'streamComplete', fullResponse })
-      } catch (error) {
-        console.error('Error in background script:', error)
-        chrome.tabs.sendMessage(sender.tab.id, { action: 'streamError', error: error.message })
-      }
-    })
-  }
-
-  if (message.action === 'getClaudeResponse') {
-    chrome.storage.sync.get(['iai_api_key'], async (result) => {
-      const apiKey = result.iai_api_key || ''
-      const modelLlm = result.iai_llm || 'claude-3-5-sonnet-20240620'
-
-      if (!apiKey) {
-        sendResponse({ error: 'API key not found' })
-        return
-      }
-
-      try {
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'x-api-key': apiKey, // Replace with your actual API key if not using env variable
-            'anthropic-version': '2023-06-01',
-            'content-type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: modelLlm,
-            max_tokens: 256,
-            messages: message.messages,
-            system: message.systemPrompt,
-            // stream: true, // Enable streaming
-          }),
-        })
-
-        if (!response.ok) {
-          throw new Error('Claude API request failed')
-        }
-
-        // const reader = response.body.getReader()
-        // const decoder = new TextDecoder('utf-8')
-        // let done = false
-        // let fullResponse = ''
-        // let buffer = ''
-
-        // while (!done) {
-        //   const { value, done: streamDone } = await reader.read()
-        //   done = streamDone
-        //   const chunk = decoder.decode(value, { stream: true })
-        //   buffer += chunk
-
-        //   // Process buffer to extract complete JSON objects
-        //   let endIndex
-        //   while ((endIndex = buffer.indexOf('\n')) >= 0) {
-        //     const line = buffer.slice(0, endIndex).trim()
-        //     buffer = buffer.slice(endIndex + 1)
-
-        //     if (line) {
-        //       try {
-        //         const json = JSON.parse(line.replace(/^data: /, ''))
-        //         const content = json.choices[0].delta.content
-        //         fullResponse += content
-
-        //         // Send each chunk to the content script with selected text
-        //         chrome.tabs.sendMessage(sender.tab.id, {
-        //           action: 'claudeStreamChunk',
-        //           chunk: content,
-        //           selectedText: message.selectedText, // Pass selected text back
-        //         })
-        //       } catch (e) {
-        //         console.error('Error parsing JSON:', e)
-        //       }
-        //     }
-        //   }
-        // }
-
-        // just send the whole response back
-        const fullResponse = await response.json()
-        chrome.tabs.sendMessage(sender.tab.id, { action: 'claudeStreamChunk', chunk: fullResponse })
-        // chrome.tabs.sendMessage(sender.tab.id, { action: 'streamComplete', fullResponse })
-      } catch (error) {
-        console.error('Error in background script:', error)
-        chrome.tabs.sendMessage(sender.tab.id, { action: 'streamError', error: error.message })
-      }
-    })
-
-    // return true
-  }
-})
-
-// Function to process the raw chunk (if necessary, otherwise pass chunk as is)
-function processChunk(chunk) {
-  // OpenAI responses typically come in a 'data:' format, so remove 'data: ' prefix and filter empty lines
-  const processed = chunk
-    .split('\n')
-    .filter((line) => line.trim() !== '' && !line.startsWith('[DONE]'))
-    .map((line) => JSON.parse(line.replace(/^data: /, '')))
-  return processed.map((c) => c.choices[0].delta.content).join('')
-}
-
 chrome.runtime.onInstalled.addListener(() => {
   // Create context menu items
   chrome.contextMenus.create({
-    id: 'run_prompt',
-    title: 'Run AI Prompt',
+    id: 'inline_ai_activate',
+    title: 'Run With Inline AI',
     contexts: ['editable', 'selection'],
   })
 
-  chrome.contextMenus.create({
-    id: 'fix_grammar',
-    title: 'Fix Grammar',
-    contexts: ['editable', 'selection'],
-  })
-
-  chrome.contextMenus.create({
-    id: 'translate_text',
-    title: 'Translate Text',
-    contexts: ['editable', 'selection'],
-  })
+  // save iai_prompt_list to storage initial value
+  chrome.storage.sync.set(
+    {
+      iai_prompt_list: [
+        {
+          id: 1,
+          name: 'Reply',
+          prompt:
+            'Craft a thoughtful response to the given chat message, social media post, comment, or email, ensuring it matches the tone and sentiment of the original message.',
+        },
+        {
+          id: 2,
+          name: 'Summarize',
+          prompt:
+            'Generate a brief and clear summary of the provided text, focusing on the main points and conveying the key message in a concise manner.',
+        },
+        {
+          id: 3,
+          name: 'Translate',
+          prompt:
+            'Translate the provided text into English while maintaining the original meaning and tone.',
+        },
+        {
+          id: 7,
+          name: 'Reword',
+          prompt:
+            'Generate a clearer, simpler, and more concise version of the given text that is easy to read and understand.',
+        },
+        {
+          id: 6,
+          name: 'CopyWrite',
+          prompt:
+            'Create compelling and persuasive marketing copy based on the given product description. The result should engage and inform the target audience, highlighting key features and benefits.',
+        },
+        {
+          id: 5,
+          name: 'Explain',
+          prompt:
+            'Provide detailed insights and explanations for the given keywords, data, or topic, offering valuable information and clarifying complex points.',
+        },
+        {
+          id: 4,
+          name: 'Inspire',
+          prompt:
+            'Generate creative ideas or inspiration based on the provided text to help spark new thoughts or approaches.',
+        },
+      ],
+    },
+    () => {
+      console.log('Initial prompt list saved')
+    },
+  )
 })
 
-// Handle context menu clicks
+// get selected text to SidePanel
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   const selectedText = info.selectionText
 
-  if (info.menuItemId === 'run_prompt') {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      chrome.tabs.sendMessage(tabs[0].id, {
-        action: 'processText',
-        command: 'run_prompt',
-        selectedText: selectedText,
+  if (info.menuItemId === 'inline_ai_activate') {
+    // Open side panel
+    chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+      const tabId = tabs[0].id
+
+      chrome.sidePanel.setOptions({
+        tabId,
+        path: 'sidePanel.html',
+        enabled: true,
       })
-    })
-  } else if (info.menuItemId === 'fix_grammar') {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      chrome.tabs.sendMessage(tabs[0].id, {
-        action: 'processText',
-        command: 'fix_grammar',
-        selectedText: selectedText,
-      })
-    })
-  } else if (info.menuItemId === 'translate_text') {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      chrome.tabs.sendMessage(tabs[0].id, {
-        action: 'processText',
-        command: 'translate_text',
-        selectedText: selectedText,
-      })
+
+      await chrome.sidePanel.open({ tabId })
+
+      // Send the selected text through the port
+      // port.postMessage({ type: 'getSelectedText', selectedText })
+      setTimeout(() => {
+        // Establish a persistent connection
+        const port = chrome.runtime.connect({ name: 'sidePanelConnection' })
+        if (!port) {
+          return
+        }
+        port.postMessage({ type: 'getSelectedText', selectedText })
+      }, 1000)
     })
   }
 })

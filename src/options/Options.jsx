@@ -7,7 +7,7 @@ import {
   MdOutlineHelpOutline,
   MdEdit,
   MdDelete,
-  MdAddCircleOutline,
+  MdAdd,
 } from 'react-icons/md'
 
 import logo from '../../public/img/logo.svg'
@@ -44,7 +44,7 @@ export const Options = () => {
             <li>
               <p
                 onClick={() => setId('howTo')}
-                className={`cursor-pointer ${id === 'howTo' ? 'active' : ''}`}
+                className={`cursor-pointer active:!bg-transparent ${id === 'howTo' ? 'hover:!bg-[#FFBE18] bg-[#FFBE18] text-white' : ''}`}
               >
                 <MdOutlineHelpOutline />
                 How To Use
@@ -53,7 +53,7 @@ export const Options = () => {
             <li>
               <p
                 onClick={() => setId('managePrompts')}
-                className={`cursor-pointer ${id === 'managePrompts' ? 'active' : ''}`}
+                className={`cursor-pointer active:!bg-transparent  ${id === 'managePrompts' ? 'hover:!bg-[#FFBE18] bg-[#FFBE18] text-white' : ''}`}
               >
                 <MdOutlineSettings />
                 Manage Prompts
@@ -62,7 +62,7 @@ export const Options = () => {
             <li>
               <p
                 onClick={() => setId('shortcuts')}
-                className={`cursor-pointer ${id === 'shortcuts' ? 'active' : ''}`}
+                className={`cursor-pointer active:!bg-transparent  ${id === 'shortcuts' ? 'hover:!bg-[#FFBE18] bg-[#FFBE18] text-white' : ''}`}
               >
                 <MdSwitchAccessShortcut />
                 Shortcuts
@@ -71,7 +71,7 @@ export const Options = () => {
             <li>
               <p
                 onClick={() => setId('aiSettings')}
-                className={`cursor-pointer ${id === 'aiSettings' ? 'active' : ''}`}
+                className={`cursor-pointer active:!bg-transparent ${id === 'aiSettings' ? 'hover:!bg-[#FFBE18] bg-[#FFBE18] text-white' : ''}`}
               >
                 <PiMagicWand />
                 AI Settings
@@ -82,7 +82,7 @@ export const Options = () => {
                 onClick={() => {
                   setId('manageLicense')
                 }}
-                className={`cursor-pointer ${id === 'manageLicense' ? 'active' : ''}`}
+                className={`cursor-pointer active:!bg-transparent  ${id === 'manageLicense' ? 'hover:!bg-[#FFBE18] bg-[#FFBE18] text-white' : ''}`}
               >
                 <MdOutlineKey />
                 Manage License
@@ -107,20 +107,16 @@ const HowToUse = () => {
   return (
     <>
       <div className="text-xl font-bold text-gray-900 mb-6">How To Use</div>
-      <div className="w-full max-w-[31rem] m-auto">
+      <div className="w-full max-w-[31rem] m-auto text-left">
         <div className="text-lg font-semibold text-gray-900 mb-4">Step 1: Select Text</div>
         <p className="text-gray-500">
-          Select the text you want to process. Right-click on the selected text and choose the
-          desired action from the context menu.
+          Select and Right-click on the text you want to process. Select{' '}
+          <b>Process with Inline AI</b> menu.
         </p>
-        <div className="text-lg font-semibold text-gray-900 mt-6 mb-4">Step 2: Choose Action</div>
+        <div className="text-lg font-semibold text-gray-900 mt-6 mb-4">Step 2: Choose Prompt</div>
         <p className="text-gray-500">
-          You can choose from the following actions: Run AI Prompt, Fix Grammar, and Translate Text.
-        </p>
-        <div className="text-lg font-semibold text-gray-900 mt-6 mb-4">Step 3: Get Results</div>
-        <p className="text-gray-500">
-          The selected text will be processed using the chosen action, and the results will be
-          displayed in the context menu.
+          You can choose any prompt that you want to use to process the selected text. You can also
+          choose the response length from small, medium, and large.
         </p>
       </div>
     </>
@@ -128,13 +124,56 @@ const HowToUse = () => {
 }
 
 const ManagePrompts = () => {
-  const [promptList, setPromptList] = useState([])
+  const [promptList, setPromptList] = useState([
+    {
+      id: 1,
+      name: 'Reply',
+      prompt:
+        'Craft a thoughtful response to the given chat message, social media post, comment, or email, ensuring it matches the tone and sentiment of the original message.',
+    },
+    {
+      id: 2,
+      name: 'Summarize',
+      prompt:
+        'Generate a brief and clear summary of the provided text, focusing on the main points and conveying the key message in a concise manner.',
+    },
+    {
+      id: 3,
+      name: 'Translate',
+      prompt:
+        'Translate the provided text into English while maintaining the original meaning and tone.',
+    },
+    {
+      id: 7,
+      name: 'Reword',
+      prompt:
+        'Generate a clearer, simpler, and more concise version of the given text that is easy to read and understand.',
+    },
+    {
+      id: 6,
+      name: 'CopyWrite',
+      prompt:
+        'Create compelling and persuasive marketing copy based on the given product description. The result should engage and inform the target audience, highlighting key features and benefits.',
+    },
+    {
+      id: 5,
+      name: 'Explain',
+      prompt:
+        'Provide detailed insights and explanations for the given keywords, data, or topic, offering valuable information and clarifying complex points.',
+    },
+    {
+      id: 4,
+      name: 'Inspire',
+      prompt:
+        'Generate creative ideas or inspiration based on the provided text to help spark new thoughts or approaches.',
+    },
+  ])
 
   // Retrieve prompts from Chrome storage
   useEffect(() => {
-    chrome.storage.sync.get(['prompt_list'], (result) => {
-      if (result.prompt_list) {
-        setPromptList(result.prompt_list)
+    chrome.storage.sync.get(['iai_prompt_list'], (result) => {
+      if (result.iai_prompt_list) {
+        setPromptList(result.iai_prompt_list)
       }
     })
   }, [])
@@ -146,7 +185,7 @@ const ManagePrompts = () => {
 
   // Save in Chrome storage
   const savePrompts = (newPromptList) => {
-    chrome.storage.sync.set({ prompt_list: newPromptList }, () => {
+    chrome.storage.sync.set({ iai_prompt_list: newPromptList }, () => {
       toast.success('Prompts saved!')
     })
   }
@@ -178,10 +217,10 @@ const ManagePrompts = () => {
     }
 
     // check if prompt already exists
-    if (promptExists(promptName)) {
-      toast.error('Prompt already exists!')
-      return
-    }
+    // if (promptExists(promptName)) {
+    //   toast.error('Prompt already exists!')
+    //   return
+    // }
 
     setPromptList(updatedPromptList)
     savePrompts(updatedPromptList)
@@ -232,7 +271,7 @@ const ManagePrompts = () => {
             promptAddModal.querySelector('#promptEditor').value = ''
           }}
         >
-          <MdAddCircleOutline color="green" size={36} />
+          <MdAdd color="#FFBE18" size={36} />
         </button>
       </div>
       <div className="w-full max-w-[31rem] m-auto">
@@ -268,7 +307,10 @@ const ManagePrompts = () => {
                   placeholder="Bio"
                 ></textarea>
               </label>
-              <button type="submit" className="btn mt-4 bg-[#2A333F] hover:bg-[#121B27] text-white">
+              <button
+                type="submit"
+                className="btn mt-4 bg-[#FFBE18] hover:bg-[#E8A701] text-white border-none"
+              >
                 Update Prompt
               </button>
             </form>
@@ -307,7 +349,10 @@ const ManagePrompts = () => {
                   placeholder="Bio"
                 ></textarea>
               </label>
-              <button type="submit" className="btn mt-4 bg-[#2A333F] hover:bg-[#121B27] text-white">
+              <button
+                type="submit"
+                className="btn mt-4 bg-[#FFBE18] hover:bg-[#E8A701] text-white border-none"
+              >
                 Add Prompt
               </button>
             </form>
@@ -378,7 +423,7 @@ const ManagePrompts = () => {
                             <td>{item.prompt}</td>
                             <td>
                               <button onClick={prepareModal(item.id)}>
-                                <MdEdit size={24} />
+                                <MdEdit color="#FFBE18" size={24} />
                               </button>
                             </td>
                             <td>
@@ -395,7 +440,7 @@ const ManagePrompts = () => {
                                   savePrompts(filteredList)
                                 }}
                               >
-                                <MdDelete color="red" size={24} />
+                                <MdDelete className="text-red-500" size={24} />
                               </button>
                             </td>
                           </tr>
@@ -468,15 +513,16 @@ const Shortcuts = () => {
 }
 
 const AISettings = () => {
-  const [model, setModel] = useState('gemini')
-  const [llm, setLlm] = useState('gemini-nano')
+  const [model, setModel] = useState('openai')
+  const [llm, setLlm] = useState('gpt-4o')
   const [apiKey, setApiKey] = useState('')
+  const [isGeminiAvailable, setIsGeminiAvailable] = useState('')
 
   // Load stored settings on mount
   useEffect(() => {
     chrome.storage.sync.get(['iai_model', 'iai_llm', 'iai_api_key'], (result) => {
-      setModel(result.iai_model || 'gemini')
-      setLlm(result.iai_llm || 'gemini-nano')
+      setModel(result.iai_model || 'openai')
+      setLlm(result.iai_llm || 'gpt-4o')
       setApiKey(result.iai_api_key || '')
     })
   }, [])
@@ -485,7 +531,7 @@ const AISettings = () => {
   const saveSettings = async (e) => {
     e.preventDefault()
 
-    if (!apiKey) {
+    if (!apiKey && model === 'openai') {
       toast.error('Please enter an API key')
       return
     }
@@ -495,10 +541,58 @@ const AISettings = () => {
     )
   }
 
+  // check if window.
+
+  const checkIfAiAvailable = async () => {
+    if (!window.ai) {
+      return 'not-available'
+    }
+
+    const { available } = await ai?.assistant?.capabilities()
+    return available
+  }
+
+  useEffect(() => {
+    checkIfAiAvailable().then((available) => {
+      setIsGeminiAvailable(available)
+    })
+  }, [])
+
+  console.log(model)
+
   return (
     <>
       <div className="text-xl font-bold text-gray-900 mb-6">AI Settings</div>
+
       <div className="form-control w-full max-w-[31rem] m-auto">
+        {isGeminiAvailable !== 'readily' && (
+          <div className="text-sm text-gray-500 mb-4 text-left bg-[#fef08a] p-3 rounded-sm">
+            <span className="font-semibold">Note:</span> Gemini Nano is currently not available in
+            your browser. Please use OpenAI or follow the instructions below to enable free Gemini
+            Nano AI Model.
+            <ol>
+              <li>
+                - Download and install Chrome with built-in AI from{' '}
+                <a href="https://www.google.com/intl/en_in/chrome/canary/" target="_blank">
+                  here
+                </a>
+                .
+              </li>
+              <li>
+                - Go to chrome://flags/#prompt-api-for-gemini-nano and enable the Prompt API for
+                Gemini Nano option.
+              </li>
+              <li>
+                - Go to chrome://flags/#optimization-guide-on-device-model and turn on the Enables
+                optimization guide on device option.
+              </li>
+              <li>
+                - Go to chrome://components/ and check or download the latest version of
+                Optimization Guide On Device Model.
+              </li>
+            </ol>
+          </div>
+        )}
         <label className="form-control w-full">
           <div className="label">
             <span className="label-text">Select the AI Model to use</span>
@@ -514,7 +608,7 @@ const AISettings = () => {
               }
             }}
           >
-            <option value="gemini">Gemini Nano (Free)</option>
+            {isGeminiAvailable === 'readily' && <option value="gemini">Gemini Nano (Free)</option>}
             <option value="openai">Open AI (Paid)</option>
             {
               // will integrate Claude later
@@ -532,7 +626,7 @@ const AISettings = () => {
         )}
 
         <button
-          className="btn mt-4 bg-[#2A333F] hover:bg-[#121B27] text-white"
+          className="btn mt-4 bg-[#FFBE18] hover:bg-[#E8A701] text-white border-none"
           onClick={saveSettings}
         >
           Save
@@ -657,6 +751,7 @@ const ManageLicense = () => {
         () => {
           setLicenseKey(licenseKey)
           setInstanceId(licenseData.instance.id)
+          setError('')
         },
       )
     } else {
@@ -732,7 +827,7 @@ const ManageLicense = () => {
             </button>
           ) : (
             <button
-              className="btn bg-[#2A333F] hover:bg-[#121B27] text-white"
+              className="btn bg-[#FFBE18] hover:bg-[#E8A701] text-white border-none"
               onClick={updateLicenseKey}
             >
               Activate
