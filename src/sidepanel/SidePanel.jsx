@@ -74,8 +74,8 @@ export const SidePanel = () => {
   console.log(promptList)
 
   const createGeminiSession = async () => {
-    const { available } = await ai?.assistant?.capabilities()
-    const session = await ai.assistant.create()
+    const { available } = await ai?.languageModel?.capabilities()
+    const session = await ai.languageModel.create()
     return { session, available }
   }
 

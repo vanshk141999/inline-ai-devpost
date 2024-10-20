@@ -548,7 +548,8 @@ const AISettings = () => {
       return 'not-available'
     }
 
-    const { available } = await ai?.assistant?.capabilities()
+    const { available } = await ai?.languageModel?.capabilities()
+
     return available
   }
 
