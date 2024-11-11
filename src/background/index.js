@@ -4,35 +4,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     chrome.storage.sync.get(
       ['iai_license_key', 'iai_model', 'iai_llm', 'iai_prompt_list', 'iai_api_key'],
       (result) => {
-        const isLicensed = result.iai_license_key ? true : false
         const model = result.iai_model || 'gemini'
         const llm = result.iai_llm || 'gemini-nano'
         const promptList = result.iai_prompt_list || []
         const apiKey = result.iai_api_key || ''
-        sendResponse({ isLicensed, model, llm, promptList, apiKey }) // Send the license key back to the content script
+        sendResponse({ model, llm, promptList, apiKey }) // Send the license key back to the content script
       },
     )
     return true // Required to indicate that sendResponse will be called asynchronously
   }
-
-  if (request.type === 'openLicensePage') {
-    chrome.tabs.create({ url: chrome.runtime.getURL('options.html') + '?id=manageLicense' })
-  }
-
-  // if (request.type === 'openSidePanel') {
-  //   console.log('Opening side panel...')
-  //   // open side panel html
-  //   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-  //     chrome.sidePanel.open(tabs[0].id)
-  //   })
-  // }
-
-  // if (request.type === 'getAllShortcuts') {
-  //   chrome.commands.getAll((commands) => {
-  //     sendResponse(commands)
-  //   })
-  //   return true
-  // }
 })
 
 chrome.runtime.onInstalled.addListener(() => {

@@ -77,17 +77,6 @@ export const Options = () => {
                 AI Settings
               </p>
             </li>
-            <li>
-              <p
-                onClick={() => {
-                  setId('manageLicense')
-                }}
-                className={`cursor-pointer active:!bg-transparent  ${id === 'manageLicense' ? 'hover:!bg-[#FFBE18] bg-[#FFBE18] text-white' : ''}`}
-              >
-                <MdOutlineKey />
-                Manage License
-              </p>
-            </li>
           </div>
         </ul>
         <div className="p-4 w-full overflow-y-auto">
@@ -95,7 +84,6 @@ export const Options = () => {
           {id === 'managePrompts' && <ManagePrompts />}
           {id === 'shortcuts' && <Shortcuts />}
           {id === 'aiSettings' && <AISettings />}
-          {id === 'manageLicense' && <ManageLicense />}
           <div class="bso-container"></div>
         </div>
       </main>
@@ -110,8 +98,8 @@ const HowToUse = () => {
       <div className="w-full max-w-[31rem] m-auto text-left">
         <div className="text-lg font-semibold text-gray-900 mb-4">Step 1: Select Text</div>
         <p className="text-gray-500">
-          Select and Right-click on the text you want to process. Select{' '}
-          <b>Process with Inline AI</b> menu.
+          Select and Right-click on the text you want to process. Select <b>Run with Inline AI</b>{' '}
+          menu.
         </p>
         <div className="text-lg font-semibold text-gray-900 mt-6 mb-4">Step 2: Choose Prompt</div>
         <p className="text-gray-500">
@@ -513,17 +501,15 @@ const Shortcuts = () => {
 }
 
 const AISettings = () => {
-  const [model, setModel] = useState('openai')
-  const [llm, setLlm] = useState('gpt-4o')
-  const [apiKey, setApiKey] = useState('')
+  const [model, setModel] = useState('gemini')
+  const [llm, setLlm] = useState('gemini-nano')
   const [isGeminiAvailable, setIsGeminiAvailable] = useState('')
 
   // Load stored settings on mount
   useEffect(() => {
-    chrome.storage.sync.get(['iai_model', 'iai_llm', 'iai_api_key'], (result) => {
-      setModel(result.iai_model || 'openai')
-      setLlm(result.iai_llm || 'gpt-4o')
-      setApiKey(result.iai_api_key || '')
+    chrome.storage.sync.get(['iai_model', 'iai_llm'], (result) => {
+      setModel(result.iai_model || 'gemini')
+      setLlm(result.iai_llm || 'gemini-nano')
     })
   }, [])
 
@@ -531,12 +517,7 @@ const AISettings = () => {
   const saveSettings = async (e) => {
     e.preventDefault()
 
-    if (!apiKey && model === 'openai') {
-      toast.error('Please enter an API key')
-      return
-    }
-
-    chrome.storage.sync.set({ iai_model: model, iai_llm: llm, iai_api_key: apiKey }, () =>
+    chrome.storage.sync.set({ iai_model: model, iai_llm: llm }, () =>
       toast.success('Settings saved'),
     )
   }
@@ -610,21 +591,10 @@ const AISettings = () => {
             }}
           >
             {isGeminiAvailable === 'readily' && <option value="gemini">Gemini Nano (Free)</option>}
-            <option value="openai">Open AI (Paid)</option>
-            {
-              // will integrate Claude later
-            }
-            {/* <option value="claude">Claude (Paid)</option> */}
           </select>
         </label>
 
         {model === 'gemini' && <GeminiSettings />}
-        {model === 'openai' && (
-          <OpenAISettings llm={llm} setLlm={setLlm} apiKey={apiKey} setApiKey={setApiKey} />
-        )}
-        {model === 'claude' && (
-          <ClaudeSettings llm={llm} setLlm={setLlm} apiKey={apiKey} setApiKey={setApiKey} />
-        )}
 
         <button
           className="btn mt-4 bg-[#FFBE18] hover:bg-[#E8A701] text-white border-none"
@@ -639,206 +609,6 @@ const AISettings = () => {
 
 const GeminiSettings = () => {
   return null // No extra settings for Gemini
-}
-
-const OpenAISettings = ({ llm, setLlm, apiKey, setApiKey }) => (
-  <>
-    <label className="form-control w-full">
-      <div className="label">
-        <span className="label-text">Select the OpenAI Model to use</span>
-      </div>
-      <select
-        className="select select-bordered"
-        value={llm}
-        onChange={(e) => setLlm(e.target.value)}
-      >
-        <option value="gpt-4o">GPT 4o</option>
-        <option value="gpt-4o-mini">GPT 4o Mini</option>
-        <option value="gpt-4-turbo">GPT 4 Turbo</option>
-        <option value="gpt-4">GPT 4</option>
-        <option value="gpt-3.5-turbo">GPT 3.5 Turbo</option>
-      </select>
-    </label>
-
-    <label className="form-control w-full">
-      <div className="label">
-        <span className="label-text">OpenAI API Key</span>
-      </div>
-      <input
-        type="text"
-        value={apiKey}
-        className="input input-bordered w-full"
-        onChange={(e) => setApiKey(e.target.value)}
-      />
-    </label>
-  </>
-)
-
-// will integrate Claude later
-// const ClaudeSettings = ({ llm, setLlm, apiKey, setApiKey }) => (
-//   <>
-//     <label className="form-control w-full">
-//       <div className="label">
-//         <span className="label-text">Select the Claude Model to use</span>
-//       </div>
-//       <select
-//         className="select select-bordered"
-//         value={llm}
-//         onChange={(e) => setLlm(e.target.value)}
-//       >
-//         <option value="claude-3-opus">Claude 3 Opus</option>
-//         <option value="claude-3-5-sonnet-20240620">Claude 3.5 Sonnet</option>
-//         <option value="claude-3-haiku">Claude 3 Haiku</option>
-//       </select>
-//     </label>
-
-//     <label className="form-control w-full">
-//       <div className="label">
-//         <span className="label-text">Claude API Key</span>
-//       </div>
-//       <input
-//         type="text"
-//         value={apiKey}
-//         className="input input-bordered w-full"
-//         onChange={(e) => setApiKey(e.target.value)}
-//       />
-//     </label>
-//   </>
-// )
-
-const ManageLicense = () => {
-  const [licenseKey, setLicenseKey] = useState('')
-  const [error, setError] = useState('')
-  const [instanceId, setInstanceId] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-
-  useEffect(() => {
-    chrome.storage.sync.get(['iai_license_key', 'iai_instance_id'], (result) => {
-      setLicenseKey(result.iai_license_key || '')
-      setInstanceId(result.iai_instance_id || '')
-    })
-  }, [])
-
-  // activate license using lemonsqueezy
-  const isLicenseActivated = async () => {
-    const response = await fetch('https://api.lemonsqueezy.com/v1/licenses/activate', {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        license_key: licenseKey,
-        instance_name: 'Test',
-      }),
-    })
-    return await response.json()
-  }
-
-  const updateLicenseKey = async (e) => {
-    e.preventDefault()
-
-    if (!licenseKey) {
-      setError('Please enter a license key')
-      return
-    }
-
-    setIsLoading(true)
-    const licenseData = await isLicenseActivated()
-
-    if (licenseData.activated) {
-      chrome.storage.sync.set(
-        { iai_license_key: licenseKey, iai_instance_id: licenseData.instance.id },
-        () => {
-          setLicenseKey(licenseKey)
-          setInstanceId(licenseData.instance.id)
-          setError('')
-        },
-      )
-    } else {
-      setError('License not activated')
-    }
-    setIsLoading(false)
-  }
-
-  const deactivateLicense = async () => {
-    const response = await fetch('https://api.lemonsqueezy.com/v1/licenses/deactivate', {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        license_key: licenseKey,
-        instance_id: instanceId,
-      }),
-    })
-    const data = await response.json()
-    return data
-  }
-
-  const deleteLicenseKey = async (e) => {
-    e.preventDefault()
-    setIsLoading(true)
-    const deactivate = await deactivateLicense()
-    if (deactivate.deactivated) {
-      chrome.storage.sync.remove(['iai_license_key', 'iai_instance_id'], () => {
-        setLicenseKey('')
-        setInstanceId('')
-      })
-    }
-    setIsLoading(false)
-  }
-
-  return (
-    <>
-      <div className="text-xl font-bold text-gray-900 mb-6">Manage License</div>
-      <div className="form-control w-full max-w-[31rem] m-auto">
-        <div className="label">
-          <span className="label-text">
-            License Key {'('}
-            <a
-              href="https://aiappstudio.lemonsqueezy.com/buy/a1bf37da-9948-468d-bbce-f0e94aff6641?checkout[discount_code]=EARLYBIRD20"
-              target="_blank"
-              className="text-blue-500"
-            >
-              Buy One
-            </a>
-            {')'}
-          </span>
-        </div>
-        <div className="flex flex-row gap-4">
-          <div className="w-full">
-            <input
-              required
-              autoComplete="off"
-              id="iai-license-key"
-              type="text"
-              className="input input-bordered w-full mb-4"
-              value={licenseKey}
-              onChange={(e) => setLicenseKey(e.target.value)}
-              disabled={isLoading || instanceId}
-            />
-            {error && <div className="text-red-500 w-full">{error}</div>}
-          </div>
-          {instanceId ? (
-            <button className="btn btn-error text-white" onClick={deleteLicenseKey}>
-              Deactivate
-              {isLoading && <span className="loading loading-spinner"></span>}
-            </button>
-          ) : (
-            <button
-              className="btn bg-[#FFBE18] hover:bg-[#E8A701] text-white border-none"
-              onClick={updateLicenseKey}
-            >
-              Activate
-              {isLoading && <span className="loading loading-spinner"></span>}
-            </button>
-          )}
-        </div>
-      </div>
-    </>
-  )
 }
 
 export default Options

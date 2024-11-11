@@ -2,7 +2,7 @@ import { defineManifest } from '@crxjs/vite-plugin'
 import packageData from '../package.json' assert { type: 'json' }
 
 export default defineManifest({
-  name: 'Use Chat GPT On Any Website - Inline AI',
+  name: 'Inline AI - Use AI On Any Website',
   description: packageData.description,
   version: packageData.version,
   manifest_version: 3,
@@ -47,5 +47,6 @@ export default defineManifest({
       description: 'Opens the options page',
     },
   },
-  permissions: ['activeTab', 'contextMenus', 'storage', 'tabs', 'sidePanel'],
+  host_permissions: ['<all_urls>'],
+  permissions: ['activeTab', 'contextMenus', 'storage', 'tabs', 'sidePanel', 'scripting'],
 })

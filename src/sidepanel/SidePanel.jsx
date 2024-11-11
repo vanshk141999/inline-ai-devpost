@@ -4,6 +4,7 @@ import { BsCopy, BsCheck2All } from 'react-icons/bs'
 import { IoMdSend, IoMdRefresh } from 'react-icons/io'
 import toast from 'react-hot-toast'
 import ReactMarkdown from 'react-markdown'
+import DOMPurify from 'dompurify'
 
 // Custom Button component
 const Button = ({ children, onClick, className = '', type = 'button' }) => (
@@ -58,10 +59,10 @@ export const SidePanel = () => {
   const [responseLength, setResponseLength] = useState('Short')
 
   const getSettings = async () => {
-    const { isLicensed, model, llm, promptList, apiKey } = await chrome.runtime.sendMessage({
+    const { model, llm, promptList, apiKey } = await chrome.runtime.sendMessage({
       type: 'getSettings',
     })
-    return { isLicensed, model, llm, promptList, apiKey }
+    return { model, llm, promptList, apiKey }
   }
 
   // set promptList to the state
@@ -71,11 +72,10 @@ export const SidePanel = () => {
     })
   }, [])
 
-  console.log(promptList)
-
   const createGeminiSession = async () => {
     const { available } = await ai?.languageModel?.capabilities()
     const session = await ai.languageModel.create()
+    // const session = await ai?.summarizer?.create()
     return { session, available }
   }
 
@@ -113,21 +113,11 @@ export const SidePanel = () => {
   const handleSend = async () => {
     if (input.trim()) {
       const userMessageId = Date.now()
-      setMessages([...messages, { id: userMessageId, text: input, sender: 'user' }])
+      const userMessage = { id: userMessageId, text: input, sender: 'user' }
+      setMessages([...messages, userMessage])
       setInput('')
 
-      const { isLicensed, model } = await getSettings()
-
-      if (!isLicensed) {
-        toast.error(
-          'Please enter a license key 🔑 to use Inline AI. Setup the license key by clicking the top left gear icon.',
-          {
-            duration: 5000,
-            icon: '🔑',
-          },
-        )
-        return
-      }
+      const { model } = await getSettings()
 
       const aiMessageId = Date.now() + 1
       setMessages((prevMessages) => [
@@ -149,7 +139,17 @@ export const SidePanel = () => {
 
       setLoadingMessageId(aiMessageId)
 
-      console.log(responseLength)
+      // Map the conversation history for OpenAI's format
+      const conversationHistory = messages.map((message) => ({
+        role: message.sender === 'user' ? 'user' : 'assistant',
+        content: message.text,
+      }))
+
+      // Add the current user message to the conversation history
+      conversationHistory.push({
+        role: 'user',
+        content: input,
+      })
 
       if (model === 'gemini' && available === 'readily') {
         const stream = session.promptStreaming(
@@ -159,81 +159,43 @@ export const SidePanel = () => {
             responseLength,
         )
 
+        // const stream = await session.summarize(
+        //   responseTypePrompt +
+        //     input +
+        //     '. Your response length should strictly be ' +
+        //     responseLength,
+        // )
+
+        // for await (const chunk of stream) {
+        //   setLoadingMessageId(null)
+        //   setMessages((prevMessages) =>
+        //     prevMessages.map((message) =>
+        //       message.id === aiMessageId ? { ...message, text: chunk } : message,
+        //     ),
+        //   )
+        // }
+
+        // if (stream) {
+        //   setLoadingMessageId(null)
+        //   setMessages((prevMessages) =>
+        //     prevMessages.map((message) =>
+        //       message.id === aiMessageId ? { ...message, text: stream } : message,
+        //     ),
+        //   )
+        // }
+
         for await (const chunk of stream) {
           setLoadingMessageId(null)
           setMessages((prevMessages) =>
             prevMessages.map((message) =>
-              message.id === aiMessageId ? { ...message, text: chunk } : message,
+              message.id === aiMessageId
+                ? { ...message, dangerouslySetInnerHTML: { __html: chunk } }
+                : message,
             ),
           )
         }
-      } else if (model === 'openai') {
-        const { llm, apiKey } = await getSettings()
 
-        const promptContent = `${input}. Your response length should strictly be ${responseLength}`
-        const headers = {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-        }
-
-        try {
-          const response = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({
-              model: llm,
-              messages: [
-                { role: 'system', content: responseType },
-                { role: 'user', content: promptContent },
-              ],
-              stream: true, // Enable streaming
-            }),
-          })
-
-          const reader = response.body.getReader()
-          const decoder = new TextDecoder()
-          let done = false
-          let fullText = '' // Will hold the ongoing AI response
-
-          // Stream chunks as they are received
-          while (!done) {
-            const { value, done: doneReading } = await reader.read()
-            done = doneReading
-            const chunk = decoder.decode(value)
-
-            // OpenAI stream sends data in lines starting with "data:"
-            const lines = chunk.split('\n').filter((line) => line.trim() !== '')
-            for (const line of lines) {
-              const message = line.replace(/^data: /, '')
-
-              if (message === '[DONE]') {
-                setLoadingMessageId(null)
-                return
-              }
-
-              try {
-                const parsed = JSON.parse(message)
-                const delta = parsed.choices[0].delta.content || ''
-
-                // Append each delta (chunk) to the full text
-                fullText += delta
-
-                // Update the AI message incrementally
-                setMessages((prevMessages) =>
-                  prevMessages.map((msg) =>
-                    msg.id === aiMessageId ? { ...msg, text: fullText } : msg,
-                  ),
-                )
-              } catch (error) {
-                console.error('Error parsing message:', error)
-              }
-            }
-          }
-        } catch (error) {
-          console.error('Error during OpenAI streaming:', error)
-          toast.error('There was an issue with the AI stream.')
-          setLoadingMessageId(null)
-        }
+        console.log(messages)
       }
     }
   }
@@ -301,7 +263,7 @@ export const SidePanel = () => {
                 message.sender === 'user' ? 'bg-gray-100' : 'bg-white'
               }`}
             >
-              {loadingMessageId === message.id && message.sender === 'ai' ? (
+              {message.sender === 'ai' ? (
                 <div dangerouslySetInnerHTML={message.dangerouslySetInnerHTML}></div>
               ) : (
                 <ReactMarkdown className="prose prose-sm max-w-none">{message.text}</ReactMarkdown>
@@ -326,14 +288,6 @@ export const SidePanel = () => {
       <footer className="border-t border-gray-200 bg-white p-4">
         <div className="flex space-x-2 mb-2">
           <Select
-            // value={responseType}
-            // onChange={setResponseType}
-            // options={[
-            //   { value: 'Reply', label: 'Reply' },
-            //   { value: 'Translate', label: 'Translate' },
-            //   { value: 'Summarize', label: 'Summarize' },
-            // ]}
-
             value={responseType}
             onChange={(value) => {
               setResponseType(value)
