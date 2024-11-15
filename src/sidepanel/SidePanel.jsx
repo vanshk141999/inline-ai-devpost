@@ -99,6 +99,8 @@ export const SidePanel = () => {
     })
   }, [])
 
+  console.log('messages:', messages)
+
   useEffect(() => {
     if (!window.ai) {
       return
@@ -159,31 +161,6 @@ export const SidePanel = () => {
             responseLength,
         )
 
-        // const stream = await session.summarize(
-        //   responseTypePrompt +
-        //     input +
-        //     '. Your response length should strictly be ' +
-        //     responseLength,
-        // )
-
-        // for await (const chunk of stream) {
-        //   setLoadingMessageId(null)
-        //   setMessages((prevMessages) =>
-        //     prevMessages.map((message) =>
-        //       message.id === aiMessageId ? { ...message, text: chunk } : message,
-        //     ),
-        //   )
-        // }
-
-        // if (stream) {
-        //   setLoadingMessageId(null)
-        //   setMessages((prevMessages) =>
-        //     prevMessages.map((message) =>
-        //       message.id === aiMessageId ? { ...message, text: stream } : message,
-        //     ),
-        //   )
-        // }
-
         for await (const chunk of stream) {
           setLoadingMessageId(null)
           setMessages((prevMessages) =>
@@ -194,8 +171,6 @@ export const SidePanel = () => {
             ),
           )
         }
-
-        console.log(messages)
       }
     }
   }
@@ -294,8 +269,6 @@ export const SidePanel = () => {
 
               // setResponseTypePrompt to promptList.prompt by finding the prompt with the same name as the selected response type
               const selectedPrompt = promptList.find((prompt) => prompt.name === value)
-
-              console.log(selectedPrompt)
 
               if (selectedPrompt) {
                 setResponseTypePrompt(selectedPrompt.prompt)
