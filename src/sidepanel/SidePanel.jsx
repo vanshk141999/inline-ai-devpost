@@ -4,7 +4,6 @@ import { BsCopy, BsCheck2All } from 'react-icons/bs'
 import { IoMdSend, IoMdRefresh } from 'react-icons/io'
 import toast from 'react-hot-toast'
 import ReactMarkdown from 'react-markdown'
-import DOMPurify from 'dompurify'
 
 // Custom Button component
 const Button = ({ children, onClick, className = '', type = 'button' }) => (
@@ -238,7 +237,9 @@ export const SidePanel = () => {
                 message.sender === 'user' ? 'bg-gray-100' : 'bg-white'
               }`}
             >
-              {message.sender === 'ai' ? (
+              {message.sender === 'ai' && message.id === 1 ? (
+                <ReactMarkdown className="prose prose-sm max-w-none">{message.text}</ReactMarkdown>
+              ) : message.sender === 'ai' ? (
                 <div dangerouslySetInnerHTML={message.dangerouslySetInnerHTML}></div>
               ) : (
                 <ReactMarkdown className="prose prose-sm max-w-none">{message.text}</ReactMarkdown>
