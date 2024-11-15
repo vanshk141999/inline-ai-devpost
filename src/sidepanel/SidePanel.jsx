@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { FaUser, FaWandMagicSparkles, FaGear } from 'react-icons/fa6'
 import { BsCopy, BsCheck2All } from 'react-icons/bs'
 import { IoMdSend, IoMdRefresh } from 'react-icons/io'
-import toast from 'react-hot-toast'
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 // Custom Button component
 const Button = ({ children, onClick, className = '', type = 'button' }) => (
@@ -242,20 +242,26 @@ export const SidePanel = () => {
               }`}
             >
               {message.sender === 'ai' && message.id === 1 ? (
-                <ReactMarkdown className="prose prose-sm max-w-none">{message.text}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm]} className="prose prose-sm max-w-none">
+                  {message.text}
+                </ReactMarkdown>
               ) : message.sender === 'ai' ? (
                 message.isLoadingMessage ? (
                   <div dangerouslySetInnerHTML={message.dangerouslySetInnerHTML} />
                 ) : (
-                  <ReactMarkdown>{message.dangerouslySetInnerHTML.__html}</ReactMarkdown>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {message.dangerouslySetInnerHTML.__html}
+                  </ReactMarkdown>
                 )
               ) : (
-                <ReactMarkdown className="prose prose-sm max-w-none">{message.text}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm]} className="prose prose-sm max-w-none">
+                  {message.text}
+                </ReactMarkdown>
               )}
             </div>
             {message.sender === 'ai' && (
               <Button
-                onClick={() => copyToClipboard(message.text, message.id)}
+                onClick={() => copyToClipboard(message.dangerouslySetInnerHTML.__html, message.id)}
                 className="self-start text-gray-500 hover:bg-gray-100"
               >
                 {copiedMessageId === message.id ? (
