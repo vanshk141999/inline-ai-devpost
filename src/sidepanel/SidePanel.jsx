@@ -127,6 +127,7 @@ export const SidePanel = () => {
           id: aiMessageId,
           text: '', // leave text empty, it'll be replaced by `dangerouslySetInnerHTML`
           sender: 'ai',
+          isLoadingMessage: true,
           dangerouslySetInnerHTML: {
             __html: `
               <svg height="40" width="40" class="loader">
@@ -165,7 +166,11 @@ export const SidePanel = () => {
           setMessages((prevMessages) =>
             prevMessages.map((message) =>
               message.id === aiMessageId
-                ? { ...message, dangerouslySetInnerHTML: { __html: chunk } }
+                ? {
+                    ...message,
+                    dangerouslySetInnerHTML: { __html: chunk },
+                    isLoadingMessage: false,
+                  }
                 : message,
             ),
           )
@@ -177,7 +182,6 @@ export const SidePanel = () => {
   const copyToClipboard = (text, id) => {
     navigator.clipboard.writeText(text).then(
       () => {
-        toast.success('Message copied to clipboard')
         setCopiedMessageId(id)
         setTimeout(() => {
           setCopiedMessageId(null)
@@ -240,7 +244,11 @@ export const SidePanel = () => {
               {message.sender === 'ai' && message.id === 1 ? (
                 <ReactMarkdown className="prose prose-sm max-w-none">{message.text}</ReactMarkdown>
               ) : message.sender === 'ai' ? (
-                <div dangerouslySetInnerHTML={message.dangerouslySetInnerHTML}></div>
+                message.isLoadingMessage ? (
+                  <div dangerouslySetInnerHTML={message.dangerouslySetInnerHTML} />
+                ) : (
+                  <ReactMarkdown>{message.dangerouslySetInnerHTML.__html}</ReactMarkdown>
+                )
               ) : (
                 <ReactMarkdown className="prose prose-sm max-w-none">{message.text}</ReactMarkdown>
               )}
