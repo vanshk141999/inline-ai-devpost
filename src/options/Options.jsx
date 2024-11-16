@@ -204,12 +204,6 @@ const ManagePrompts = () => {
       return
     }
 
-    // check if prompt already exists
-    // if (promptExists(promptName)) {
-    //   toast.error('Prompt already exists!')
-    //   return
-    // }
-
     setPromptList(updatedPromptList)
     savePrompts(updatedPromptList)
     promptEditorModal.close()
@@ -523,7 +517,6 @@ const AISettings = () => {
   }
 
   // check if window.
-
   const checkIfAiAvailable = async () => {
     if (!window.ai) {
       return 'not-available'

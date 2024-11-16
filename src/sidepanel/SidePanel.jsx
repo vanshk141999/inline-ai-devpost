@@ -74,7 +74,6 @@ export const SidePanel = () => {
   const createGeminiSession = async () => {
     const { available } = await ai?.languageModel?.capabilities()
     const session = await ai.languageModel.create()
-    // const session = await ai?.summarizer?.create()
     return { session, available }
   }
 
@@ -98,10 +97,13 @@ export const SidePanel = () => {
     })
   }, [])
 
-  console.log('messages:', messages)
-
   useEffect(() => {
     if (!window.ai) {
+      return
+    }
+
+    // check if session is available and create a new session if it's not
+    if (session) {
       return
     }
 
