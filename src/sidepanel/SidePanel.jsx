@@ -52,8 +52,8 @@ export const SidePanel = () => {
   const [loadingMessageId, setLoadingMessageId] = useState(null)
   const [session, setSession] = useState(null)
   const [available, setAvailable] = useState(null)
-  const [responseType, setResponseType] = useState('Reply')
   const [promptList, setPromptList] = useState([])
+  const [responseTypePromptName, setResponseTypePromptName] = useState('')
   const [responseTypePrompt, setResponseTypePrompt] = useState('')
   const [responseLength, setResponseLength] = useState('Short')
 
@@ -67,15 +67,74 @@ export const SidePanel = () => {
   // set promptList to the state
   useEffect(() => {
     getSettings().then(({ promptList }) => {
-      setPromptList(promptList)
+      // static prompt list
+      const staticPromptList = [
+        // {
+        //   id: 1,
+        //   name: 'Rewrite',
+        //   prompt: '',
+        // },
+        // {
+        //   id: 2,
+        //   name: 'Write',
+        //   prompt: '',
+        // },
+        {
+          id: 3,
+          name: 'Summarize',
+          prompt: '',
+        },
+      ]
+      const finalPromptList = [...staticPromptList, ...promptList]
+      setPromptList(finalPromptList)
     })
   }, [])
+
+  // set responseTypePrompt to promptList.prompt and responseTypePromptName to promptList.name of the first prompt in the promptList
+  useEffect(() => {
+    if (promptList.length > 0) {
+      setResponseTypePromptName(promptList[0].name)
+      setResponseTypePrompt(promptList[0].prompt)
+    }
+  }, [promptList])
 
   const createGeminiSession = async () => {
     const { available } = await ai?.languageModel?.capabilities()
     const session = await ai.languageModel.create()
     return { session, available }
   }
+
+  const createSummarizerSession = async () => {
+    const { available } = await ai?.languageModel?.capabilities()
+    const canSummarize = await ai.summarizer.capabilities()
+    let summarizer
+    if (canSummarize && canSummarize.available !== 'no') {
+      if (canSummarize.available === 'readily') {
+        // The summarizer can immediately be used.
+        summarizer = await ai.summarizer.create()
+      } else {
+        // The summarizer can be used after the model download.
+        summarizer = await ai.summarizer.create()
+        summarizer.addEventListener('downloadprogress', (e) => {
+          console.log(e.loaded, e.total)
+        })
+        await summarizer.ready
+      }
+    } else {
+      // The summarizer can't be used at all.
+      console.error('Summarizer is not available')
+    }
+
+    return { summarizer, available }
+  }
+
+  // might be used later when issues with writer and rewriter are resolved - https://issues.chromium.org/issues/374942272?pli=1
+  // const createRewriterSession = async () => {
+  //   await destroyGeminiSession()
+  //   const { available } = await ai?.languageModel?.capabilities()
+  //   const rewriter = await ai.rewriter.create()
+  //   return { session, available }
+  // }
 
   const destroyGeminiSession = async () => {
     if (session) {
@@ -156,6 +215,28 @@ export const SidePanel = () => {
       })
 
       if (model === 'gemini' && available === 'readily') {
+        if (responseTypePromptName === 'Summarize') {
+          const { summarizer, available } = await createSummarizerSession()
+          if (available === 'readily') {
+            const stream = await summarizer.summarize(
+              input + '. Your response length should strictly be ' + responseLength,
+            )
+            setLoadingMessageId(null)
+            setMessages((prevMessages) =>
+              prevMessages.map((message) =>
+                message.id === aiMessageId
+                  ? {
+                      ...message,
+                      dangerouslySetInnerHTML: { __html: stream },
+                      isLoadingMessage: false,
+                    }
+                  : message,
+              ),
+            )
+          }
+          return
+        }
+
         const stream = session.promptStreaming(
           responseTypePrompt +
             input +
@@ -280,14 +361,13 @@ export const SidePanel = () => {
       <footer className="border-t border-gray-200 bg-white p-4">
         <div className="flex space-x-2 mb-2">
           <Select
-            value={responseType}
+            value={responseTypePromptName}
             onChange={(value) => {
-              setResponseType(value)
-
               // setResponseTypePrompt to promptList.prompt by finding the prompt with the same name as the selected response type
               const selectedPrompt = promptList.find((prompt) => prompt.name === value)
 
               if (selectedPrompt) {
+                setResponseTypePromptName(selectedPrompt.name)
                 setResponseTypePrompt(selectedPrompt.prompt)
               }
             }}
