@@ -34,6 +34,7 @@ const Select = ({ value, onChange, options }) => (
 // Custom Textarea component
 const Textarea = ({ value, onChange, placeholder, onKeyDown }) => (
   <textarea
+    maxLength={3000}
     value={value}
     onChange={onChange}
     placeholder={placeholder}
@@ -100,7 +101,9 @@ export const SidePanel = () => {
 
   const createGeminiSession = async () => {
     const { available } = await ai?.languageModel?.capabilities()
-    const session = await ai.languageModel.create()
+    const session = await ai.languageModel.create({
+      systemPrompt: responseTypePrompt,
+    })
     return { session, available }
   }
 
@@ -170,7 +173,7 @@ export const SidePanel = () => {
       setAvailable(available)
       setSession(session)
     })
-  }, [])
+  }, [responseTypePrompt])
 
   const handleSend = async () => {
     if (input.trim()) {
@@ -238,10 +241,8 @@ export const SidePanel = () => {
         }
 
         const stream = session.promptStreaming(
-          responseTypePrompt +
-            input +
-            '. Your response length should strictly be ' +
-            responseLength,
+          // responseTypePrompt +
+          input + '. Your response length should strictly be ' + responseLength,
         )
 
         for await (const chunk of stream) {
