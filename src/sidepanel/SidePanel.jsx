@@ -6,8 +6,9 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
 // Custom Button component
-const Button = ({ children, onClick, className = '', type = 'button' }) => (
+const Button = ({ disabled, children, onClick, className = '', type = 'button' }) => (
   <button
+    disabled={disabled}
     type={type}
     onClick={onClick}
     className={`px-4 py-2 rounded-md font-medium focus:outline-none focus:ring-0 ${className}`}
@@ -54,9 +55,10 @@ export const SidePanel = () => {
   const [session, setSession] = useState(null)
   const [available, setAvailable] = useState(null)
   const [promptList, setPromptList] = useState([])
-  const [responseTypePromptName, setResponseTypePromptName] = useState('')
+  const [responseTypePromptName, setResponseTypePromptName] = useState('Reply')
   const [responseTypePrompt, setResponseTypePrompt] = useState('')
   const [responseLength, setResponseLength] = useState('Short')
+  const [disableSendBtn, setDisableSendBtn] = useState(false)
 
   const getSettings = async () => {
     const { model, llm, promptList, apiKey } = await chrome.runtime.sendMessage({
@@ -70,23 +72,13 @@ export const SidePanel = () => {
     getSettings().then(({ promptList }) => {
       // static prompt list
       const staticPromptList = [
-        // {
-        //   id: 1,
-        //   name: 'Rewrite',
-        //   prompt: '',
-        // },
-        // {
-        //   id: 2,
-        //   name: 'Write',
-        //   prompt: '',
-        // },
         {
-          id: 3,
+          id: 1,
           name: 'Summarize',
           prompt: '',
         },
       ]
-      const finalPromptList = [...staticPromptList, ...promptList]
+      const finalPromptList = [...promptList, ...staticPromptList]
       setPromptList(finalPromptList)
     })
   }, [])
@@ -177,6 +169,7 @@ export const SidePanel = () => {
 
   const handleSend = async () => {
     if (input.trim()) {
+      setDisableSendBtn(true)
       const userMessageId = Date.now()
       const userMessage = { id: userMessageId, text: input, sender: 'user' }
       setMessages([...messages, userMessage])
@@ -216,6 +209,24 @@ export const SidePanel = () => {
         role: 'user',
         content: input,
       })
+
+      if (!session && tokensLeft <= 500) {
+        setMessages((prevMessages) =>
+          prevMessages.map((message) =>
+            message.id === aiMessageId
+              ? {
+                  ...message,
+                  dangerouslySetInnerHTML: {
+                    __html:
+                      'You have run out of tokens. Please click on the reset icon to start a new chat.',
+                  },
+                  isLoadingMessage: false,
+                }
+              : message,
+          ),
+        )
+        return
+      }
 
       if (model === 'gemini' && available === 'readily') {
         if (responseTypePromptName === 'Summarize') {
@@ -258,6 +269,7 @@ export const SidePanel = () => {
                 : message,
             ),
           )
+          setDisableSendBtn(false)
         }
       }
     }
@@ -399,6 +411,7 @@ export const SidePanel = () => {
             }}
           />
           <Button
+            disabled={disableSendBtn}
             type="button"
             onClick={handleSend}
             className="bg-[#FFBE18] text-white hover:bg-[#ffa81f]"

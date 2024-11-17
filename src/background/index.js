@@ -28,16 +28,10 @@ chrome.runtime.onInstalled.addListener(() => {
     {
       iai_prompt_list: [
         {
-          id: 1,
+          id: 2,
           name: 'Reply',
           prompt:
             'Craft a thoughtful response to the given chat message, social media post, comment, or email, ensuring it matches the tone and sentiment of the original message.',
-        },
-        {
-          id: 2,
-          name: 'Summarize',
-          prompt:
-            'Generate a brief and clear summary of the provided text, focusing on the main points and conveying the key message in a concise manner.',
         },
         {
           id: 3,
@@ -46,13 +40,7 @@ chrome.runtime.onInstalled.addListener(() => {
             'Translate the provided text into English while maintaining the original meaning and tone.',
         },
         {
-          id: 7,
-          name: 'Reword',
-          prompt:
-            'Generate a clearer, simpler, and more concise version of the given text that is easy to read and understand.',
-        },
-        {
-          id: 6,
+          id: 4,
           name: 'CopyWrite',
           prompt:
             'Create compelling and persuasive marketing copy based on the given product description. The result should engage and inform the target audience, highlighting key features and benefits.',
@@ -64,10 +52,16 @@ chrome.runtime.onInstalled.addListener(() => {
             'Provide detailed insights and explanations for the given keywords, data, or topic, offering valuable information and clarifying complex points.',
         },
         {
-          id: 4,
+          id: 6,
           name: 'Inspire',
           prompt:
             'Generate creative ideas or inspiration based on the provided text to help spark new thoughts or approaches.',
+        },
+        {
+          id: 7,
+          name: 'Reword',
+          prompt:
+            'Generate a clearer, simpler, and more concise version of the given text that is easy to read and understand.',
         },
       ],
     },
