@@ -19,7 +19,13 @@ chrome.runtime.onInstalled.addListener(() => {
     contexts: ['editable', 'selection'],
   })
 
-  // Create context menu items
+  chrome.contextMenus.create({
+    id: 'inline_ai_open',
+    parentId: 'inline_ai_activate',
+    title: 'Open',
+    contexts: ['editable', 'selection'],
+  })
+
   chrome.contextMenus.create({
     id: 'inline_ai_summarize',
     parentId: 'inline_ai_activate',
@@ -74,57 +80,56 @@ chrome.runtime.onInstalled.addListener(() => {
 })
 
 // get selected text to SidePanel
+// Helper function to open the side panel and send selected text through a port
+async function openSidePanelAndSendText(tabId, selectedText, promptName = '') {
+  // Set up the side panel options
+  chrome.sidePanel.setOptions({
+    tabId,
+    path: 'sidePanel.html',
+    enabled: true,
+  })
+
+  // Open the side panel
+  await chrome.sidePanel.open({ tabId })
+
+  // Wait a moment before establishing the connection
+  setTimeout(() => {
+    const port = chrome.runtime.connect({ name: 'sidePanelConnection' })
+    if (!port) {
+      return
+    }
+
+    // Send the selected text
+    port.postMessage({ type: 'getSelectedText', selectedText })
+
+    // If a promptName is provided, send it as well
+    if (promptName) {
+      port.postMessage({ type: 'promptName', promptName })
+    }
+  }, 1000)
+}
+
+// Listener for context menu clicks
 chrome.contextMenus.onClicked.addListener(async (info) => {
   const selectedText = info.selectionText
 
-  if (info.menuItemId === 'inline_ai_activate') {
-    // Open side panel
+  if (info.menuItemId) {
+    // Get the active tab
     chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
       const tabId = tabs[0].id
 
-      chrome.sidePanel.setOptions({
-        tabId,
-        path: 'sidePanel.html',
-        enabled: true,
-      })
+      // Open the side panel and send the selected text (with or without a prompt name)
+      let promptName = ''
+      switch (info.menuItemId) {
+        case 'inline_ai_summarize':
+          promptName = 'Summarize'
+          break
+        default:
+          promptName = ''
+          break
+      }
 
-      await chrome.sidePanel.open({ tabId })
-
-      // Send the selected text through the port
-      setTimeout(() => {
-        // Establish a persistent connection
-        const port = chrome.runtime.connect({ name: 'sidePanelConnection' })
-        if (!port) {
-          return
-        }
-        port.postMessage({ type: 'getSelectedText', selectedText })
-      }, 1000)
-    })
-  }
-
-  if (info.menuItemId === 'inline_ai_summarize') {
-    // Open side panel
-    chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
-      const tabId = tabs[0].id
-
-      chrome.sidePanel.setOptions({
-        tabId, // Required
-        path: 'sidePanel.html',
-        enabled: true,
-      })
-
-      await chrome.sidePanel.open({ tabId })
-
-      // Send the selected text through the port
-      setTimeout(() => {
-        // Establish a persistent connection
-        const port = chrome.runtime.connect({ name: 'sidePanelConnection' })
-        if (!port) {
-          return
-        }
-        port.postMessage({ type: 'getSelectedText', selectedText })
-        port.postMessage({ type: 'promptName', promptName: 'Summarize' })
-      }, 1000)
+      await openSidePanelAndSendText(tabId, selectedText, promptName)
     })
   }
 })
