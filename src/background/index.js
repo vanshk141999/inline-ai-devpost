@@ -100,30 +100,6 @@ chrome.commands.onCommand.addListener((command) => {
   if (command === 'options_page') {
     chrome.runtime.openOptionsPage()
   }
-
-  if (command === 'selected_text_to_side_panel') {
-    chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
-      const tabId = tabs[0].id
-
-      chrome.sidePanel.setOptions({
-        tabId,
-        path: 'sidePanel.html',
-        enabled: true,
-      })
-
-      await chrome.sidePanel.open({ tabId })
-
-      // Send the selected text through the port
-      setTimeout(() => {
-        // Establish a persistent connection
-        const port = chrome.runtime.connect({ name: 'sidePanelConnection' })
-        if (!port) {
-          return
-        }
-        port.postMessage({ type: 'getSelectedText', selectedText })
-      }, 1000)
-    })
-  }
 })
 
 chrome.sidePanel

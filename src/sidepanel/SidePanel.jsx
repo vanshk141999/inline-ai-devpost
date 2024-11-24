@@ -144,7 +144,6 @@ export const SidePanel = () => {
         port.onMessage.addListener((msg) => {
           if (msg.type === 'getSelectedText') {
             setInput(msg.selectedText)
-            console.log('Received selected text:', msg.selectedText)
           }
         })
       }
