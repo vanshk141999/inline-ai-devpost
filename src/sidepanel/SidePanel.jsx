@@ -258,7 +258,6 @@ export const SidePanel = () => {
         }
 
         const stream = session.promptStreaming(
-          // responseTypePrompt +
           input + '. Your response length should strictly be ' + responseLength,
         )
 
@@ -382,7 +381,6 @@ export const SidePanel = () => {
           <Select
             value={responseTypePromptName}
             onChange={(value) => {
-              // setResponseTypePrompt to promptList.prompt by finding the prompt with the same name as the selected response type
               const selectedPrompt = promptList.find((prompt) => prompt.name === value)
 
               if (selectedPrompt) {
