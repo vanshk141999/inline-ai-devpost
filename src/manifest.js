@@ -46,6 +46,14 @@ export default defineManifest({
       },
       description: 'Opens the options page',
     },
+    selected_text_to_side_panel: {
+      suggested_key: {
+        default: 'Ctrl+Shift+I',
+        mac: 'Command+Shift+I',
+        windows: 'Ctrl+Shift+I',
+      },
+      description: 'Open side panel with selected text in the input field',
+    },
   },
   host_permissions: ['<all_urls>'],
   permissions: ['activeTab', 'contextMenus', 'storage', 'tabs', 'sidePanel', 'scripting'],

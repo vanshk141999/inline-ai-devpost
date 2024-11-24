@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react'
-import { PiMagicWand } from 'react-icons/pi'
 import {
   MdOutlineSettings,
-  MdOutlineKey,
   MdSwitchAccessShortcut,
   MdOutlineHelpOutline,
   MdEdit,
@@ -56,7 +54,7 @@ export const Options = () => {
                 className={`cursor-pointer active:!bg-transparent  ${id === 'managePrompts' ? 'hover:!bg-[#FFBE18] bg-[#FFBE18] text-white' : ''}`}
               >
                 <MdOutlineSettings />
-                Manage Prompts
+                Manage System Prompts
               </p>
             </li>
             <li>
@@ -68,22 +66,12 @@ export const Options = () => {
                 Shortcuts
               </p>
             </li>
-            <li>
-              <p
-                onClick={() => setId('aiSettings')}
-                className={`cursor-pointer active:!bg-transparent ${id === 'aiSettings' ? 'hover:!bg-[#FFBE18] bg-[#FFBE18] text-white' : ''}`}
-              >
-                <PiMagicWand />
-                AI Settings
-              </p>
-            </li>
           </div>
         </ul>
         <div className="p-4 w-full overflow-y-auto">
           {id === 'howTo' && <HowToUse />}
           {id === 'managePrompts' && <ManagePrompts />}
           {id === 'shortcuts' && <Shortcuts />}
-          {id === 'aiSettings' && <AISettings />}
           <div class="bso-container"></div>
         </div>
       </main>
@@ -101,7 +89,9 @@ const HowToUse = () => {
           Select and Right-click on the text you want to process. Select <b>Run with Inline AI</b>{' '}
           menu.
         </p>
-        <div className="text-lg font-semibold text-gray-900 mt-6 mb-4">Step 2: Choose Prompt</div>
+        <div className="text-lg font-semibold text-gray-900 mt-6 mb-4">
+          Step 2: Choose a System Prompt
+        </div>
         <p className="text-gray-500">
           You can choose any prompt that you want to use to process the selected text. You can also
           choose the response length from small, medium, and large.
@@ -225,7 +215,7 @@ const ManagePrompts = () => {
 
     // check if prompt already exists
     if (promptExists(promptName)) {
-      toast.error('Prompt already exists!')
+      toast.error('System prompt already exists!')
       return
     }
 
@@ -237,7 +227,7 @@ const ManagePrompts = () => {
   return (
     <>
       <div className="text-xl font-bold text-gray-900 mb-6 flex justify-center items-center gap-2">
-        Manage Prompts{' '}
+        Manage System Prompts{' '}
         <button
           onClick={() => {
             const promptAddModal = document.getElementById('promptAddModal')
@@ -261,10 +251,10 @@ const ManagePrompts = () => {
               className="flex flex-col gap-4 items-center justify-center w-full"
               onSubmit={(e) => updatePrompt(e)}
             >
-              <h1 className="text-xl font-bold text-gray-900 mb-2">Edit Prompt</h1>
+              <h1 className="text-xl font-bold text-gray-900 mb-2">Edit System Prompt</h1>
               <label className="form-control w-full">
                 <div className="label">
-                  <span className="label-text">Prompt Name</span>
+                  <span className="label-text">System Prompt Name</span>
                 </div>
                 <input
                   id="promptNameEditor"
@@ -275,7 +265,7 @@ const ManagePrompts = () => {
               </label>
               <label className="form-control w-full">
                 <div className="label">
-                  <span className="label-text">Prompt</span>
+                  <span className="label-text">System Prompt</span>
                 </div>
                 <textarea
                   id="promptEditor"
@@ -287,7 +277,7 @@ const ManagePrompts = () => {
                 type="submit"
                 className="btn mt-4 bg-[#FFBE18] hover:bg-[#E8A701] text-white border-none"
               >
-                Update Prompt
+                Update System Prompt
               </button>
             </form>
           </div>
@@ -303,10 +293,10 @@ const ManagePrompts = () => {
               className="flex flex-col gap-4 items-center justify-center w-full"
               onSubmit={(e) => addPrompt(e)}
             >
-              <h1 className="text-xl font-bold text-gray-900 mb-2">Add Prompt</h1>
+              <h1 className="text-xl font-bold text-gray-900 mb-2">Add System Prompt</h1>
               <label className="form-control w-full">
                 <div className="label">
-                  <span className="label-text">Prompt Name</span>
+                  <span className="label-text">System Prompt Name</span>
                 </div>
                 <input
                   id="promptNameEditor"
@@ -317,7 +307,7 @@ const ManagePrompts = () => {
               </label>
               <label className="form-control w-full">
                 <div className="label">
-                  <span className="label-text">Prompt</span>
+                  <span className="label-text">System Prompt</span>
                 </div>
                 <textarea
                   id="promptEditor"
@@ -329,7 +319,7 @@ const ManagePrompts = () => {
                 type="submit"
                 className="btn mt-4 bg-[#FFBE18] hover:bg-[#E8A701] text-white border-none"
               >
-                Add Prompt
+                Add System Prompt
               </button>
             </form>
           </div>
@@ -340,7 +330,7 @@ const ManagePrompts = () => {
           <thead>
             <tr>
               <th>Name</th>
-              <th>Prompt</th>
+              <th>System Prompt</th>
               <th>Edit</th>
               <th>Delete</th>
             </tr>
@@ -486,116 +476,6 @@ const Shortcuts = () => {
       </div>
     </>
   )
-}
-
-const AISettings = () => {
-  const [model, setModel] = useState('gemini')
-  const [llm, setLlm] = useState('gemini-nano')
-  const [isGeminiAvailable, setIsGeminiAvailable] = useState('')
-
-  // Load stored settings on mount
-  useEffect(() => {
-    chrome.storage.sync.get(['iai_model', 'iai_llm'], (result) => {
-      setModel(result.iai_model || 'gemini')
-      setLlm(result.iai_llm || 'gemini-nano')
-    })
-  }, [])
-
-  // Save settings to chrome storage
-  const saveSettings = async (e) => {
-    e.preventDefault()
-
-    chrome.storage.sync.set({ iai_model: model, iai_llm: llm }, () =>
-      toast.success('Settings saved'),
-    )
-  }
-
-  // check if window.
-  const checkIfAiAvailable = async () => {
-    if (!window.ai) {
-      return 'not-available'
-    }
-
-    const { available } = await ai?.languageModel?.capabilities()
-
-    return available
-  }
-
-  useEffect(() => {
-    checkIfAiAvailable().then((available) => {
-      setIsGeminiAvailable(available)
-    })
-  }, [])
-
-  console.log(model)
-
-  return (
-    <>
-      <div className="text-xl font-bold text-gray-900 mb-6">AI Settings</div>
-
-      <div className="form-control w-full max-w-[31rem] m-auto">
-        {isGeminiAvailable !== 'readily' && (
-          <div className="text-sm text-gray-500 mb-4 text-left bg-[#fef08a] p-3 rounded-sm">
-            <span className="font-semibold">Note:</span> Gemini Nano is currently not available in
-            your browser. Please use OpenAI or follow the instructions below to enable free Gemini
-            Nano AI Model.
-            <ol>
-              <li>
-                - Download and install Chrome with built-in AI from{' '}
-                <a href="https://www.google.com/intl/en_in/chrome/canary/" target="_blank">
-                  here
-                </a>
-                .
-              </li>
-              <li>
-                - Go to chrome://flags/#prompt-api-for-gemini-nano and enable the Prompt API for
-                Gemini Nano option.
-              </li>
-              <li>
-                - Go to chrome://flags/#optimization-guide-on-device-model and turn on the Enables
-                optimization guide on device option.
-              </li>
-              <li>
-                - Go to chrome://components/ and check or download the latest version of
-                Optimization Guide On Device Model.
-              </li>
-            </ol>
-          </div>
-        )}
-        <label className="form-control w-full">
-          <div className="label">
-            <span className="label-text">Select the AI Model to use</span>
-          </div>
-          <select
-            className="select select-bordered"
-            value={model}
-            onChange={(e) => {
-              const selectedModel = e.target.value
-              setModel(selectedModel)
-              if (selectedModel === 'gemini') {
-                setLlm('gemini-nano')
-              }
-            }}
-          >
-            {isGeminiAvailable === 'readily' && <option value="gemini">Gemini Nano (Free)</option>}
-          </select>
-        </label>
-
-        {model === 'gemini' && <GeminiSettings />}
-
-        <button
-          className="btn mt-4 bg-[#FFBE18] hover:bg-[#E8A701] text-white border-none"
-          onClick={saveSettings}
-        >
-          Save
-        </button>
-      </div>
-    </>
-  )
-}
-
-const GeminiSettings = () => {
-  return null // No extra settings for Gemini
 }
 
 export default Options

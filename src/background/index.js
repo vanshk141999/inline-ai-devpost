@@ -1,16 +1,12 @@
 // get settings from storage
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.type === 'getSettings') {
-    chrome.storage.sync.get(
-      ['iai_license_key', 'iai_model', 'iai_llm', 'iai_prompt_list', 'iai_api_key'],
-      (result) => {
-        const model = result.iai_model || 'gemini'
-        const llm = result.iai_llm || 'gemini-nano'
-        const promptList = result.iai_prompt_list || []
-        const apiKey = result.iai_api_key || ''
-        sendResponse({ model, llm, promptList, apiKey }) // Send the license key back to the content script
-      },
-    )
+    chrome.storage.sync.get(['iai_model', 'iai_llm', 'iai_prompt_list'], (result) => {
+      const model = result.iai_model || 'gemini'
+      const llm = result.iai_llm || 'gemini-nano'
+      const promptList = result.iai_prompt_list || []
+      sendResponse({ model, llm, promptList }) // Send the license key back to the content script
+    })
     return true // Required to indicate that sendResponse will be called asynchronously
   }
 })
@@ -65,14 +61,12 @@ chrome.runtime.onInstalled.addListener(() => {
         },
       ],
     },
-    () => {
-      console.log('Initial prompt list saved')
-    },
+    () => {},
   )
 })
 
 // get selected text to SidePanel
-chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+chrome.contextMenus.onClicked.addListener(async (info) => {
   const selectedText = info.selectionText
 
   if (info.menuItemId === 'inline_ai_activate') {
@@ -89,7 +83,37 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       await chrome.sidePanel.open({ tabId })
 
       // Send the selected text through the port
-      // port.postMessage({ type: 'getSelectedText', selectedText })
+      setTimeout(() => {
+        // Establish a persistent connection
+        const port = chrome.runtime.connect({ name: 'sidePanelConnection' })
+        if (!port) {
+          return
+        }
+        port.postMessage({ type: 'getSelectedText', selectedText })
+      }, 1000)
+    })
+  }
+})
+
+// add support for shortcut key options_page
+chrome.commands.onCommand.addListener((command) => {
+  if (command === 'options_page') {
+    chrome.runtime.openOptionsPage()
+  }
+
+  if (command === 'selected_text_to_side_panel') {
+    chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+      const tabId = tabs[0].id
+
+      chrome.sidePanel.setOptions({
+        tabId,
+        path: 'sidePanel.html',
+        enabled: true,
+      })
+
+      await chrome.sidePanel.open({ tabId })
+
+      // Send the selected text through the port
       setTimeout(() => {
         // Establish a persistent connection
         const port = chrome.runtime.connect({ name: 'sidePanelConnection' })
