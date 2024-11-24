@@ -14,7 +14,7 @@ import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd'
 
 import './Options.css'
 
-export const Options = () => {
+const Options = () => {
   const [id, setId] = useState()
 
   useEffect(() => {

@@ -145,6 +145,13 @@ export const SidePanel = () => {
           if (msg.type === 'getSelectedText') {
             setInput(msg.selectedText)
           }
+          if (msg.type === 'promptName') {
+            setResponseTypePromptName(msg.promptName)
+            const selectedPrompt = promptList.find((prompt) => prompt.name === msg.promptName)
+            if (selectedPrompt) {
+              setResponseTypePrompt(selectedPrompt.prompt)
+            }
+          }
         })
       }
     })

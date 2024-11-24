@@ -19,6 +19,14 @@ chrome.runtime.onInstalled.addListener(() => {
     contexts: ['editable', 'selection'],
   })
 
+  // Create context menu items
+  chrome.contextMenus.create({
+    id: 'inline_ai_summarize',
+    parentId: 'inline_ai_activate',
+    title: 'Summarize',
+    contexts: ['editable', 'selection'],
+  })
+
   // save iai_prompt_list to storage initial value
   chrome.storage.sync.set(
     {
@@ -90,6 +98,32 @@ chrome.contextMenus.onClicked.addListener(async (info) => {
           return
         }
         port.postMessage({ type: 'getSelectedText', selectedText })
+      }, 1000)
+    })
+  }
+
+  if (info.menuItemId === 'inline_ai_summarize') {
+    // Open side panel
+    chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+      const tabId = tabs[0].id
+
+      chrome.sidePanel.setOptions({
+        tabId, // Required
+        path: 'sidePanel.html',
+        enabled: true,
+      })
+
+      await chrome.sidePanel.open({ tabId })
+
+      // Send the selected text through the port
+      setTimeout(() => {
+        // Establish a persistent connection
+        const port = chrome.runtime.connect({ name: 'sidePanelConnection' })
+        if (!port) {
+          return
+        }
+        port.postMessage({ type: 'getSelectedText', selectedText })
+        port.postMessage({ type: 'promptName', promptName: 'Summarize' })
       }, 1000)
     })
   }
