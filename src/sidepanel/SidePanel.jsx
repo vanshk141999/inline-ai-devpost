@@ -60,6 +60,8 @@ export const SidePanel = () => {
   const [responseLength, setResponseLength] = useState('Short')
   const [responseTone, setResponseTone] = useState('neutral')
   const [disableSendBtn, setDisableSendBtn] = useState(false)
+  const showRewriteOrWriteOptions =
+    responseTypePromptName === 'Rewrite' || responseTypePromptName === 'Write'
 
   console.log(responseTypePromptName)
 
@@ -493,24 +495,22 @@ export const SidePanel = () => {
             onChange={setResponseLength}
             options={[
               { value: 'short', label: 'Short' },
-              responseTypePromptName === 'Rewrite' ||
-                (responseTypePromptName === 'Write' && { value: 'medium', label: 'Medium' }),
+              showRewriteOrWriteOptions && { value: 'medium', label: 'Medium' },
               { value: 'detailed', label: 'Detailed' },
             ]}
           />
           {/* If option selected is Rewrite or Write then show this select */}
-          {responseTypePromptName === 'Rewrite' ||
-            (responseTypePromptName === 'Write' && (
-              <Select
-                value={responseTone}
-                onChange={setResponseTone}
-                options={[
-                  { value: 'formal', label: 'Formal' },
-                  { value: 'neutral', label: 'Neutral' },
-                  { value: 'casual', label: 'Casual' },
-                ]}
-              />
-            ))}
+          {showRewriteOrWriteOptions && (
+            <Select
+              value={responseTone}
+              onChange={setResponseTone}
+              options={[
+                { value: 'formal', label: 'Formal' },
+                { value: 'neutral', label: 'Neutral' },
+                { value: 'casual', label: 'Casual' },
+              ]}
+            />
+          )}
         </div>
         <div className="flex space-x-2">
           <Textarea
