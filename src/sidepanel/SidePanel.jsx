@@ -58,7 +58,10 @@ export const SidePanel = () => {
   const [responseTypePromptName, setResponseTypePromptName] = useState('Reply')
   const [responseTypePrompt, setResponseTypePrompt] = useState('')
   const [responseLength, setResponseLength] = useState('Short')
+  const [responseTone, setResponseTone] = useState('neutral')
   const [disableSendBtn, setDisableSendBtn] = useState(false)
+
+  console.log(responseTypePromptName)
 
   const getSettings = async () => {
     const { model, llm, promptList, apiKey } = await chrome.runtime.sendMessage({
@@ -131,13 +134,21 @@ export const SidePanel = () => {
     return { summarizer, available }
   }
 
-  // might be used later when issues with writer and rewriter are resolved - https://issues.chromium.org/issues/374942272?pli=1
-  // const createRewriterSession = async () => {
-  //   await destroyGeminiSession()
-  //   const { available } = await ai?.languageModel?.capabilities()
-  //   const rewriter = await ai.rewriter.create()
-  //   return { session, available }
-  // }
+  const createRewriterSession = async () => {
+    const { available } = await ai?.languageModel?.capabilities()
+    const session = await ai.rewriter.create({
+      sharedContext: 'You are expert rewriter that can rewrite any text.',
+    })
+    return { session, available }
+  }
+
+  const createWriterSession = async () => {
+    const { available } = await ai?.languageModel?.capabilities()
+    const session = await ai.writer.create({
+      sharedContext: 'You are an expert writer that can write any text.',
+    })
+    return { session, available }
+  }
 
   const destroyGeminiSession = async () => {
     if (session) {
@@ -242,27 +253,103 @@ export const SidePanel = () => {
         return
       }
 
-      if (model === 'gemini' && available === 'readily') {
+      if (model === 'gemini' && available !== 'no') {
         if (responseTypePromptName === 'Summarize') {
           const { summarizer, available } = await createSummarizerSession()
-          if (available === 'readily') {
-            const stream = await summarizer.summarize(
-              input + '. Your response length should strictly be ' + responseLength,
-            )
+          const stream = await summarizer.summarize(
+            input + '. Your response length should strictly be ' + responseLength,
+          )
+          setLoadingMessageId(null)
+          setMessages((prevMessages) =>
+            prevMessages.map((message) =>
+              message.id === aiMessageId
+                ? {
+                    ...message,
+                    dangerouslySetInnerHTML: { __html: stream },
+                    isLoadingMessage: false,
+                  }
+                : message,
+            ),
+          )
+          return
+        }
+
+        if (responseTypePromptName === 'Rewrite') {
+          const { session } = await createRewriterSession()
+
+          let length = ''
+
+          switch (responseLength) {
+            case 'Short':
+              length = 'short'
+              break
+            case 'Detailed':
+              length = 'long'
+              break
+            default:
+              length = 'neutral'
+          }
+
+          const stream = await session.rewriteStreaming({
+            tone: responseTone,
+            length: length,
+            sharedContext: input,
+          })
+
+          for await (const chunk of stream) {
             setLoadingMessageId(null)
             setMessages((prevMessages) =>
               prevMessages.map((message) =>
                 message.id === aiMessageId
                   ? {
                       ...message,
-                      dangerouslySetInnerHTML: { __html: stream },
+                      dangerouslySetInnerHTML: { __html: chunk },
                       isLoadingMessage: false,
                     }
                   : message,
               ),
             )
+            setDisableSendBtn(false)
           }
-          return
+        }
+
+        if (responseTypePromptName === 'Write') {
+          const { session } = await createWriterSession()
+
+          let length = ''
+
+          switch (responseLength) {
+            case 'Short':
+              length = 'short'
+              break
+            case 'Detailed':
+              length = 'long'
+              break
+            default:
+              length = 'neutral'
+          }
+
+          const stream = await session.writeStreaming({
+            tone: responseTone,
+            length: length,
+            sharedContext: input,
+          })
+
+          for await (const chunk of stream) {
+            setLoadingMessageId(null)
+            setMessages((prevMessages) =>
+              prevMessages.map((message) =>
+                message.id === aiMessageId
+                  ? {
+                      ...message,
+                      dangerouslySetInnerHTML: { __html: chunk.trim() },
+                      isLoadingMessage: false,
+                    }
+                  : message,
+              ),
+            )
+            setDisableSendBtn(false)
+          }
         }
 
         const stream = session.promptStreaming(
@@ -405,10 +492,25 @@ export const SidePanel = () => {
             value={responseLength}
             onChange={setResponseLength}
             options={[
-              { value: 'Short', label: 'Short' },
-              { value: 'Detailed', label: 'Detailed' },
+              { value: 'short', label: 'Short' },
+              responseTypePromptName === 'Rewrite' ||
+                (responseTypePromptName === 'Write' && { value: 'medium', label: 'Medium' }),
+              { value: 'detailed', label: 'Detailed' },
             ]}
           />
+          {/* If option selected is Rewrite or Write then show this select */}
+          {responseTypePromptName === 'Rewrite' ||
+            (responseTypePromptName === 'Write' && (
+              <Select
+                value={responseTone}
+                onChange={setResponseTone}
+                options={[
+                  { value: 'formal', label: 'Formal' },
+                  { value: 'neutral', label: 'Neutral' },
+                  { value: 'casual', label: 'Casual' },
+                ]}
+              />
+            ))}
         </div>
         <div className="flex space-x-2">
           <Textarea

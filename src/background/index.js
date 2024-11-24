@@ -33,6 +33,20 @@ chrome.runtime.onInstalled.addListener(() => {
     contexts: ['editable', 'selection'],
   })
 
+  chrome.contextMenus.create({
+    id: 'inline_ai_write',
+    parentId: 'inline_ai_activate',
+    title: 'Write',
+    contexts: ['editable', 'selection'],
+  })
+
+  chrome.contextMenus.create({
+    id: 'inline_ai_rewrite',
+    parentId: 'inline_ai_activate',
+    title: 'Rewrite',
+    contexts: ['editable', 'selection'],
+  })
+
   // save iai_prompt_list to storage initial value
   chrome.storage.sync.set(
     {
@@ -123,6 +137,12 @@ chrome.contextMenus.onClicked.addListener(async (info) => {
       switch (info.menuItemId) {
         case 'inline_ai_summarize':
           promptName = 'Summarize'
+          break
+        case 'inline_ai_write':
+          promptName = 'Write'
+          break
+        case 'inline_ai_rewrite':
+          promptName = 'Rewrite'
           break
         default:
           promptName = ''
