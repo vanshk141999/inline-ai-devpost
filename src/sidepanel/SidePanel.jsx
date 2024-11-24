@@ -77,6 +77,16 @@ export const SidePanel = () => {
           name: 'Summarize',
           prompt: '',
         },
+        {
+          id: 2,
+          name: 'Write',
+          prompt: '',
+        },
+        {
+          id: 3,
+          name: 'Rewrite',
+          prompt: '',
+        },
       ]
       const finalPromptList = [...promptList, ...staticPromptList]
       setPromptList(finalPromptList)
@@ -110,9 +120,7 @@ export const SidePanel = () => {
       } else {
         // The summarizer can be used after the model download.
         summarizer = await ai.summarizer.create()
-        summarizer.addEventListener('downloadprogress', (e) => {
-          console.log(e.loaded, e.total)
-        })
+        summarizer.addEventListener('downloadprogress', (e) => {})
         await summarizer.ready
       }
     } else {
