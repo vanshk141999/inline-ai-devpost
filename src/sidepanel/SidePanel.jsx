@@ -507,6 +507,7 @@ export const SidePanel = () => {
           {/* If option selected is Rewrite or Write then show this select */}
           {showRewriteOrWriteOptions && (
             <Select
+              label="Tone"
               value={responseTone}
               onChange={setResponseTone}
               options={[
