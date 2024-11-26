@@ -18,18 +18,21 @@ const Button = ({ disabled, children, onClick, className = '', type = 'button' }
 )
 
 // Custom Select component
-const Select = ({ value, onChange, options }) => (
-  <select
-    value={value}
-    onChange={(e) => onChange(e.target.value)}
-    className="bg-white border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-0"
-  >
-    {options.map((option) => (
-      <option key={option.value} value={option.value}>
-        {option.label}
-      </option>
-    ))}
-  </select>
+const Select = ({ value, onChange, options, label }) => (
+  <div className="flex flex-col">
+    <label className="font-bold">{label}</label>
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="bg-white border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-0"
+    >
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  </div>
 )
 
 // Custom Textarea component
@@ -257,7 +260,7 @@ export const SidePanel = () => {
 
       if (model === 'gemini' && available !== 'no') {
         if (responseTypePromptName === 'Summarize') {
-          const { summarizer, available } = await createSummarizerSession()
+          const { summarizer } = await createSummarizerSession()
           const stream = await summarizer.summarize(
             input + '. Your response length should strictly be ' + responseLength,
           )
@@ -476,6 +479,7 @@ export const SidePanel = () => {
       <footer className="border-t border-gray-200 bg-white p-4">
         <div className="flex space-x-2 mb-2">
           <Select
+            label="System Prompt"
             value={responseTypePromptName}
             onChange={(value) => {
               const selectedPrompt = promptList.find((prompt) => prompt.name === value)
@@ -491,11 +495,12 @@ export const SidePanel = () => {
             }))}
           />
           <Select
+            label="Length"
             value={responseLength}
             onChange={setResponseLength}
             options={[
               { value: 'short', label: 'Short' },
-              showRewriteOrWriteOptions && { value: 'medium', label: 'Medium' },
+              { value: 'medium', label: 'Medium' },
               { value: 'detailed', label: 'Detailed' },
             ]}
           />
