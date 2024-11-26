@@ -3,7 +3,7 @@
   "displayName": "inline-ai",
   "version": "1.0.0",
   "author": "Vansh Kapoor",
-  "description": "Use GPT for running a quick prompt, fixing grammar, translating text, all with a simple click.",
+  "description": "Use AI for running a quick prompt, fixing grammar, translating text, all within your browser.",
   "type": "module",
   "license": "",
   "keywords": [
